@@ -2,28 +2,26 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
+import os
 from config import Config
+from flask_mail import Mail
 
+mail = Mail()
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
 
-def create_app(config_class=Config):
+def create_app():
     app = Flask(__name__)
-    app.config.from_object(config_class)
-
+    
+    # Load configuration
+    app.config.from_object(Config)
+    
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-
-    from app.models import User  # Ensure models are imported
-
-    @app.route('/test_db')
-    def test_db():
-        try:
-            db.session.execute('SELECT 1')
-            return jsonify({'message': 'Database connected successfully!'})
-        except Exception as e:
-            return jsonify({'message': 'Database connection failed!', 'error': str(e)})
-
+    
+    from .routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
+    
     return app

@@ -1,5 +1,5 @@
 from app import ma
-from app.models import User, UserRole
+from models import User, UserRole
 
 class UserSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
