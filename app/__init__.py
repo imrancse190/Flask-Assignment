@@ -17,5 +17,4 @@ def create_app(config_class=Config):
     jwt.init_app(app)
 
     from app.models import User  # Ensure models are imported
-
     return app
