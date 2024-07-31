@@ -13,7 +13,7 @@ class User(db.Model):
     username = db.Column(db.String(50), nullable=False, unique=True)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     role = db.Column(db.Enum(UserRole), default=UserRole.USER)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
