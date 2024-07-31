@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import db
-from app.models import User, UserRole
+from .models import User, UserRole
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import check_password_hash
 from app.utils import send_password_reset_email
@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 api_bp = Blueprint('api', __name__)
 
 # Register a new user
-@api_bp.route('/register', methods=['POST'])
+@api_bp.route('auth/register', methods=['POST'])
 def register_user():
     data = request.json
     try:
@@ -29,7 +29,7 @@ def register_user():
         return jsonify({"msg": "Username or email already exists."}), 400
 
 # User login
-@api_bp.route('/login', methods=['POST'])
+@api_bp.route('auth/login', methods=['POST'])
 def login_user():
     data = request.json
     user = User.query.filter_by(username=data['username']).first()
@@ -39,7 +39,7 @@ def login_user():
     return jsonify({"msg": "Invalid username or password."}), 401
 
 # Password reset request
-@api_bp.route('/reset_password', methods=['POST'])
+@api_bp.route('auth/reset_password', methods=['POST'])
 def reset_password():
     data = request.json
     user = User.query.filter_by(email=data['email']).first()
