@@ -1,7 +1,8 @@
 Flask==2.2.3
-SQLAlchemy==1.4.29
-psycopg2-binary==2.9.3
+SQLAlchemy
+psycopg2-binary
 Flask-JWT-Extended==4.3.1
-Flask-Migrate==3.1.0
-Flask-Mail==0.10.0
+Flask-Migrate
+Flask-Mail
 flask-restx
+werkzeug==2.3.0

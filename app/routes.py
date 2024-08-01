@@ -8,7 +8,6 @@ from sqlalchemy.exc import IntegrityError
 
 api_bp = Blueprint('api', __name__)
 
-# Register a new user
 @api_bp.route('auth/register', methods=['POST'])
 def register_user():
     data = request.json
@@ -28,7 +27,6 @@ def register_user():
         db.session.rollback()
         return jsonify({"msg": "Username or email already exists."}), 400
 
-# User login
 @api_bp.route('auth/login', methods=['POST'])
 def login_user():
     data = request.json
@@ -38,18 +36,15 @@ def login_user():
         return jsonify(access_token=access_token), 200
     return jsonify({"msg": "Invalid username or password."}), 401
 
-# Password reset request
 @api_bp.route('auth/reset_password', methods=['POST'])
 def reset_password():
     data = request.json
     user = User.query.filter_by(email=data['email']).first()
     if user:
-        # Send reset email (implement email sending in utils)
         send_password_reset_email(user)
         return jsonify({"msg": "Password reset email sent."}), 200
     return jsonify({"msg": "User with this email not found."}), 404
 
-# Update user details (admin only)
 @api_bp.route('/user/<int:user_id>', methods=['PUT'])
 @jwt_required()
 def update_user(user_id):
@@ -79,7 +74,6 @@ def update_user(user_id):
     db.session.commit()
     return jsonify({"msg": "User details updated."}), 200
 
-# Delete user (admin only)
 @api_bp.route('/user/<int:user_id>', methods=['DELETE'])
 @jwt_required()
 def delete_user(user_id):
