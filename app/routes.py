@@ -26,15 +26,22 @@ def register_user():
     except IntegrityError:
         db.session.rollback()
         return jsonify({"msg": "Username or email already exists."}), 400
+    except Exception as e:
+        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
 
 @api_bp.route('auth/login', methods=['POST'])
 def login_user():
     data = request.json
-    user = User.query.filter_by(username=data['username']).first()
-    if user and user.check_password(data['password']):
-        access_token = create_access_token(identity={'id': user.id, 'role': user.role.name})
-        return jsonify(access_token=access_token), 200
-    return jsonify({"msg": "Invalid username or password."}), 401
+ 
+    try:
+        user = User.query.filter_by(username=data['username']).first()
+        if user and user.check_password(data['password']):
+            access_token = create_access_token(identity={'id': user.id,'username':user.username, 'role': user.role.name})
+            return jsonify(access_token=access_token), 200
+        return jsonify({"msg": "Invalid username or password."}), 401
+    except Exception as e:
+        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
+
 
 @api_bp.route('auth/reset_password', methods=['POST'])
 def reset_password():
@@ -74,18 +81,39 @@ def update_user(user_id):
     db.session.commit()
     return jsonify({"msg": "User details updated."}), 200
 
-@api_bp.route('/user/<int:user_id>', methods=['DELETE'])
+
+@api_bp.route('/user', methods=['DELETE'])
 @jwt_required()
-def delete_user(user_id):
-    current_user = get_jwt_identity()
-    user = User.query.get(user_id)
+def delete_user():
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({"msg": "Request body must be JSON."}), 400
 
-    if not user:
-        return jsonify({"msg": "User not found."}), 404
+        username = data.get('username')
+        
+        if not username:
+            return jsonify({"msg": "Username is required in the request body."}), 400
 
-    if current_user['role'] != 'ADMIN' and current_user['id'] != user_id:
-        return jsonify({"msg": "Permission denied."}), 403
+        current_user = get_jwt_identity()
+        if not current_user:
+            return jsonify({"msg": "Invalid token or user not found."}), 401
 
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({"msg": "User deleted."}), 200
+        user = User.query.filter_by(username=username).first()
+
+        if not user:
+            return jsonify({"msg": "User not found."}), 404
+
+
+        if current_user['role'] != 'ADMIN':
+            return jsonify({"msg": "Permission denied. You are not an admin."}), 403
+
+        if  current_user['username'] == username or user.role == 'ADMIN':
+            return jsonify({"msg": "Permission denied. You cannot delete an admin."}), 403
+
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"msg": "User deleted."}), 200
+
+    except Exception as e:
+        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
