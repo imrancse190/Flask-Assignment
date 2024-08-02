@@ -32,6 +32,8 @@ def register_routes(api):
         'password': fields.String(required=True)
     })
 
+
+
     @user_ns.route('/register')
     class UserRegister(Resource):
         @user_ns.expect(register_model)
@@ -58,6 +60,8 @@ def register_routes(api):
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
+
+
     @user_ns.route('/login')
     class UserLogin(Resource):
         @user_ns.expect(login_model)
@@ -75,6 +79,8 @@ def register_routes(api):
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
+
+
     @user_ns.route('/reset_password')
     class PasswordReset(Resource):
         @user_ns.expect(api.model('ResetPassword', {'email': fields.String(required=True)}))
@@ -90,8 +96,13 @@ def register_routes(api):
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
+
+
+
     @user_ns.route('/<string:username>')
     class UserResource(Resource):
+
+
         @user_ns.marshal_with(user_model)
         @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
         @jwt_required()
@@ -104,6 +115,8 @@ def register_routes(api):
             if not user:
                 api.abort(404, "User not found.")
             return user
+
+
 
         @user_ns.expect(user_model)
         @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
@@ -122,12 +135,13 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                # Admins can update their own info or that of non-admin users
+                # ADMINs can update their own info or that of non-ADMIN users
                 if current_user_role == 'ADMIN':
                     if user.role == UserRole.ADMIN and current_user['username'] != username:
-                        return {'msg': "Permission denied. You cannot update another admin."}, 403
+                        return {'msg': "Permission denied. You cannot update another ADMIN."}, 403
+                    
                 else:
-                    return {'msg': "Only admin can update information."}, 403
+                    return {'msg': "Only ADMIN can update information."}, 403
 
                 # Update user fields
                 updated_fields = {}
@@ -161,6 +175,9 @@ def register_routes(api):
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
             
+
+
+            
         @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
         @jwt_required()
         def delete(self, username):
@@ -174,13 +191,13 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                # Check if the current user is an admin
+                # Check if the current user is an ADMIN
                 if current_user['role'] != 'ADMIN':
-                    return {'msg': "Permission denied. Only admin can access."}, 403
+                    return {'msg': "Permission denied. Only ADMIN can access."}, 403
 
-                # Prevent deletion of admin users or the current user
+                # Prevent deletion of ADMIN users or the current user
                 if current_user['username'] == username or user.role == UserRole.ADMIN:
-                    return {'msg': "Permission denied. You cannot delete an admin or yourself."}, 403
+                    return {'msg': "Permission denied. You cannot delete an ADMIN or yourself."}, 403
 
                 db.session.delete(user)
                 db.session.commit()
