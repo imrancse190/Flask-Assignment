@@ -93,7 +93,7 @@ def register_routes(api):
     @user_ns.route('/<string:username>')
     class UserResource(Resource):
         @user_ns.marshal_with(user_model)
-        @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Bearer TOKEN'}})
+        @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
         @jwt_required()
         def get(self, username):
             '''Get user details'''
@@ -106,7 +106,7 @@ def register_routes(api):
             return user
 
         @user_ns.expect(user_model)
-        @user_ns.doc(params={'X-Fields': {'in': 'header', 'description': 'An optional fields mask'}})
+        @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
         @jwt_required()
         def put(self, username):
             '''Update user details'''
@@ -155,8 +155,36 @@ def register_routes(api):
                 db.session.commit()
 
                 # Marshal only the updated fields
-                response = marshal(updated_fields, user_model)
-                return {'msg': "User details updated.", 'updated_fields': response}, 200
+                
+                return {'msg': "User details updated."}, 200
             
+            except Exception as e:
+                return {'msg': f"An error occurred: {str(e)}"}, 500
+            
+        @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
+        @jwt_required()
+        def delete(self, username):
+            '''Delete a user'''
+            try:
+                current_user = get_jwt_identity()
+                if not current_user:
+                    return {'msg': "Invalid token or user not found."}, 401
+
+                user = User.query.filter_by(username=username).first()
+                if not user:
+                    return {'msg': "User not found."}, 404
+
+                # Check if the current user is an admin
+                if current_user['role'] != 'ADMIN':
+                    return {'msg': "Permission denied. Only admin can access."}, 403
+
+                # Prevent deletion of admin users or the current user
+                if current_user['username'] == username or user.role == UserRole.ADMIN:
+                    return {'msg': "Permission denied. You cannot delete an admin or yourself."}, 403
+
+                db.session.delete(user)
+                db.session.commit()
+                return {'msg': "User deleted."}, 200
+
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
