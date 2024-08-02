@@ -3,15 +3,12 @@ from flask import request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from .models import User, UserRole
 from . import db
-from .utils import send_password_reset_email
+from .utils import send_password_reset_email, verify_reset_token, generate_reset_token
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime, timedelta
-from itsdangerous.serializer import Serializer
-
 
 def register_routes(api):
     user_ns = api.namespace('user', description='User operations')
-
+    
     user_model = api.model('User', {
         'id': fields.Integer(readonly=True),
         'username': fields.String(required=True),
@@ -35,6 +32,16 @@ def register_routes(api):
         'password': fields.String(required=True)
     })
 
+    reset_password_request_model = api.model('ResetPasswordRequest', {
+        'username':fields.String(required=True),
+        'email': fields.String(required=True)
+    })
+
+    reset_password_model = api.model('ResetPassword', {
+        'token': fields.String(required=True),
+        'new_password': fields.String(required=True)
+    })
+
     @user_ns.route('/register')
     class UserRegister(Resource):
         @user_ns.expect(register_model)
@@ -52,7 +59,6 @@ def register_routes(api):
                 new_user.set_password(data['password'])
                 db.session.add(new_user)
                 db.session.commit()
-
                 return {'msg': "User registered successfully."}, 201
             except IntegrityError:
                 db.session.rollback()
@@ -77,51 +83,41 @@ def register_routes(api):
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
-    @user_ns.route('/forgot_password')
-    class ForgotPassword(Resource):
-        @user_ns.expect(api.model('ForgotPassword', {'email': fields.String(required=True)}))
+    @user_ns.route('/forget_password')
+    class ForgetPassword(Resource):
+        @user_ns.expect(reset_password_request_model)
         def post(self):
-            '''Request a password reset'''
+            '''Request a password reset token'''
             try:
                 data = request.json
-                user = User.query.filter_by(email=data['email']).first()
+                user = User.query.filter_by(username=data['username']).first()
                 if user:
-                    token = user.get_reset_token()
-                    user.password_reset_token = token
-                    user.password_reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
-                    db.session.commit()
-                    send_password_reset_email(user, token)
-                    return {'msg': 'Password reset email sent.'}, 200
+                    print(user)
+                    token = generate_reset_token(user)
+                    # send_password_reset_email(user, token)
+                    return {'msg': f'User: {user}. Token {token}'}, 200
                 return {'msg': 'User with this email not found.'}, 404
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
     @user_ns.route('/reset_password')
     class ResetPassword(Resource):
-        @user_ns.expect(api.model('ResetPassword', {
-            'token': fields.String(required=True),
-            'new_password': fields.String(required=True)
-        }))
+        @user_ns.expect(reset_password_model)
         def post(self):
-            '''Reset the password using the token'''
+            '''Reset password using the token'''
             try:
                 data = request.json
-                user = User.verify_reset_token(data['token'])
-                if user is None:
-                    return {'msg': 'Invalid or expired token.'}, 400
-                user.set_password(data['new_password'])
-                user.password_reset_token = None
-                user.password_reset_token_expiration = None
-                db.session.commit()
-                return {'msg': 'Password has been reset.'}, 200
+                user = verify_reset_token(data['token'])
+                if user:
+                    user.set_password(data['new_password'])
+                    db.session.commit()
+                    return {'msg': 'Password has been reset.'}, 200
+                return {'msg': 'Invalid or expired token.'}, 400
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
-                 
-
     @user_ns.route('/<string:username>')
     class UserResource(Resource):
-
         @user_ns.marshal_with(user_model)
         @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Required JWT token', 'required': True}})
         @jwt_required()
@@ -152,15 +148,12 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                # ADMINs can update their own info or that of non-ADMIN users
                 if current_user_role == 'ADMIN':
                     if user.role == UserRole.ADMIN and current_user['username'] != username:
                         return {'msg': "Permission denied. You cannot update another ADMIN."}, 403
-
                 else:
                     return {'msg': "Only ADMIN can update information."}, 403
 
-                # Update user fields
                 updated_fields = {}
                 if 'username' in data:
                     user.username = data['username']
@@ -184,11 +177,8 @@ def register_routes(api):
                     updated_fields['role'] = user.role.name
 
                 db.session.commit()
-
-                # Marshal only the updated fields
-
                 return {'msg': "User details updated."}, 200
-
+            
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
 
@@ -205,11 +195,9 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                # Check if the current user is an ADMIN
                 if current_user['role'] != 'ADMIN':
                     return {'msg': "Permission denied. Only ADMIN can access."}, 403
 
-                # Prevent deletion of ADMIN users or the current user
                 if current_user['username'] == username or user.role == UserRole.ADMIN:
                     return {'msg': "Permission denied. You cannot delete an ADMIN or yourself."}, 403
 
