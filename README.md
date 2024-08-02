@@ -72,6 +72,11 @@ SECURITY_PASSWORD_SALT=your_password_salt
 - **MAIL_PASSWORD**: Password for the email account.
 - **SECURITY_PASSWORD_SALT**: Salt for password hashing.
 
+## Database migration
+
+- `flask db migrate -m "message"`
+- `flask db upgrade`
+
 ## API Endpoints
 
 ### User Registration
