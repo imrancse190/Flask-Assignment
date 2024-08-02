@@ -1,16 +1,12 @@
-from flask_mail import Mail, Message
-from flask import current_app
-
-mail = Mail()
+from flask_mail import Message
+from . import mail
 
 def send_password_reset_email(user):
-    token = create_access_token(identity={'id': user.id}, expires_delta=False)
-    reset_link = f"{current_app.config['FRONTEND_URL']}/reset_password?token={token}"
-    
-    msg = Message('Password Reset Request',
+    token = user.get_reset_password_token()
+    msg = Message('Reset Your Password',
                   sender='noreply@example.com',
                   recipients=[user.email])
-    msg.body = f"To reset your password, visit the following link: {reset_link}"
-    
-    with current_app.app_context():
-        mail.send(msg)
+    msg.body = f'''To reset your password, visit the following link: {url_for('reset_password', token=token, _external=True)}
+If you did not make this request then simply ignore this email and no changes will be made.
+'''
+    mail.send(msg)

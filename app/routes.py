@@ -1,130 +1,129 @@
-from flask import Blueprint, request, jsonify
-from app import db
-from .models import User, UserRole
+from flask_restx import Namespace, Resource, fields
+from flask import request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from werkzeug.security import check_password_hash
-from app.utils import send_password_reset_email
+from .models import User, UserRole
+from . import db
+from .utils import send_password_reset_email
 from sqlalchemy.exc import IntegrityError
 
-api_bp = Blueprint('api', __name__)
-
-@api_bp.route('/auth/register', methods=['POST'])
-def register_user():
-    data = request.json
-    try:
-       
-        new_user = User(
-            username=data['username'],
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            email=data['email'],
-            role=UserRole.USER 
-        )
-        new_user.set_password(data['password'])
-        db.session.add(new_user)
-        db.session.commit()
-        return jsonify({"msg": "User registered successfully."}), 201
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({"msg": "Username or email already exists."}), 400
-    except Exception as e:
-        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
-
-@api_bp.route('/auth/login', methods=['POST'])
-def login_user():
-    data = request.json
+def register_routes(api):
+    user_ns = api.namespace('user', description='User operations')
     
-    try:
-        user = User.query.filter_by(username=data['username']).first()
-        print(user)
-        if user and not user.active:
-            return jsonify({"msg": "Your account is deactivated."}), 401
-        if user and user.check_password(data['password']):
-            access_token = create_access_token(identity={'id': user.id, 'username': user.username, 'role': user.role.name})
-            return jsonify(access_token=access_token), 200
-        return jsonify({"msg": "Invalid username or password."}), 401
-    except Exception as e:
-        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
+    user_model = api.model('User', {
+        'id': fields.Integer(readonly=True),
+        'username': fields.String(required=True),
+        'first_name': fields.String(required=True),
+        'last_name': fields.String(required=True),
+        'email': fields.String(required=True),
+        'role': fields.String(enum=[role.name for role in UserRole]),
+        'active': fields.Boolean()
+    })
 
-@api_bp.route('auth/reset_password', methods=['POST'])
-def reset_password():
-    data = request.json
-    user = User.query.filter_by(email=data['email']).first()
-    if user:
-        send_password_reset_email(user)
-        return jsonify({"msg": "Password reset email sent."}), 200
-    return jsonify({"msg": "User with this email not found."}), 404
+    register_model = api.model('RegisterUser', {
+        'username': fields.String(required=True),
+        'first_name': fields.String(required=True),
+        'last_name': fields.String(required=True),
+        'email': fields.String(required=True),
+        'password': fields.String(required=True)
+    })
 
-@api_bp.route('/user/<string:username>', methods=['PUT'])
-@jwt_required()
-def update_user(username):
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"msg": "Request body must be JSON."}), 400
+    login_model = api.model('Login', {
+        'username': fields.String(required=True),
+        'password': fields.String(required=True)
+    })
 
-        current_user = get_jwt_identity()
-        current_user_id = current_user['id']
-        current_user_role = current_user['role']
+    @user_ns.route('/register')
+    class UserRegister(Resource):
+        @user_ns.expect(register_model)
+        @user_ns.marshal_with(user_model, code=201)
+        def post(self):
+            '''Register a new user'''
+            data = request.json
+            try:
+                new_user = User(
+                    username=data['username'],
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    email=data['email'],
+                    role=UserRole.USER
+                )
+                new_user.set_password(data['password'])
+                db.session.add(new_user)
+                db.session.commit()
+                return new_user, 201
+            except IntegrityError:
+                db.session.rollback()
+                api.abort(400, "Username or email already exists.")
 
-        user = User.query.filter_by(username=username).first()
+    @user_ns.route('/login')
+    class UserLogin(Resource):
+        @user_ns.expect(login_model)
+        def post(self):
+            '''Login and receive an access token'''
+            data = request.json
+            user = User.query.filter_by(username=data['username']).first()
+            if user and user.check_password(data['password']):
+                if not user.active:
+                    return {'message': 'Your account is deactivated.'}, 401
+                access_token = create_access_token(identity={'id': user.id, 'username': user.username, 'role': user.role.name})
+                return {'access_token': access_token}, 200
+            return {'message': 'Invalid username or password.'}, 401
 
-        if not user:
-            return jsonify({"msg": "User not found."}), 404
+    @user_ns.route('/reset_password')
+    class PasswordReset(Resource):
+        @user_ns.expect(api.model('ResetPassword', {'email': fields.String(required=True)}))
+        def post(self):
+            '''Request a password reset'''
+            data = request.json
+            user = User.query.filter_by(email=data['email']).first()
+            if user:
+                send_password_reset_email(user)
+                return {'message': 'Password reset email sent.'}, 200
+            return {'message': 'User with this email not found.'}, 404
 
-        # Admins can update their own info or that of non-admin users
-        if current_user_role == 'ADMIN':
-            if user.role == UserRole.ADMIN and current_user['username'] != username:
-                return jsonify({"msg": "Permission denied. You cannot update another admin."}), 403
-        else:
-            return jsonify({"msg": "Only admin can update information."}), 403
+    @user_ns.route('/<string:username>')
+    class UserResource(Resource):
+        @user_ns.marshal_with(user_model)
+        @jwt_required()
+        def get(self, username):
+            '''Get user details'''
+            current_user = get_jwt_identity()
+            if current_user['role'] != 'ADMIN' and current_user['username'] != username:
+                api.abort(403, "Permission denied.")
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                api.abort(404, "User not found.")
+            return user
 
-        # Update user fields
-        if 'username' in data:
-            user.username = data['username']
-        if 'first_name' in data:
-            user.first_name = data['first_name']
-        if 'last_name' in data:
-            user.last_name = data['last_name']
-        if 'email' in data:
-            user.email = data['email']
-        if 'password' in data:
-            user.set_password(data['password'])
-        if 'active' in data:
-            user.active = data['active']
-        
-        db.session.commit()
-        return jsonify({"msg": "User details updated."}), 200
-    
-    except Exception as e:
-        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
+        @user_ns.expect(user_model)
+        @user_ns.marshal_with(user_model)
+        @jwt_required()
+        def put(self, username):
+            '''Update user details'''
+            current_user = get_jwt_identity()
+            if current_user['role'] != 'ADMIN' and current_user['username'] != username:
+                api.abort(403, "Permission denied.")
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                api.abort(404, "User not found.")
+            data = request.json
+            for key, value in data.items():
+                if key != 'id' and hasattr(user, key):
+                    setattr(user, key, value)
+            db.session.commit()
+            return user
 
-
-@api_bp.route('/user/<string:username>', methods=['DELETE'])
-@jwt_required()
-def delete_user(username):
-    try:
-        current_user = get_jwt_identity()
-
-        if not current_user:
-            return jsonify({"msg": "Invalid token or user not found."}), 401
-
-        user = User.query.filter_by(username=username).first()
-
-        if not user:
-            return jsonify({"msg": "User not found."}), 404
-
-        # Check if the current user is an admin
-        if current_user['role'] != 'ADMIN':
-            return jsonify({"msg": "Permission denied. Only admin can access."}), 403
-
-        # Prevent deletion of admin users or the current user
-        if current_user['username'] == username or user.role == UserRole.ADMIN:
-            return jsonify({"msg": "Permission denied. You cannot delete an admin or yourself."}), 403
-
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({"msg": "User deleted."}), 200
-
-    except Exception as e:
-        return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
+        @jwt_required()
+        def delete(self, username):
+            '''Delete a user'''
+            current_user = get_jwt_identity()
+            if current_user['role'] != 'ADMIN':
+                api.abort(403, "Permission denied.")
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                api.abort(404, "User not found.")
+            if user.role == UserRole.ADMIN:
+                api.abort(403, "Cannot delete an admin user.")
+            db.session.delete(user)
+            db.session.commit()
+            return {'message': 'User deleted.'}, 200

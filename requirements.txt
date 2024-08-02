@@ -7,3 +7,4 @@ Flask-Mail
 flask-restx
 werkzeug==2.3.0
 python-dotenv
+flask-cors
