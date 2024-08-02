@@ -1,5 +1,5 @@
 from itsdangerous import URLSafeTimedSerializer
-from flask import current_app
+from flask import current_app, url_for
 from .models import User
 from flask_mail import Message
 from . import mail

@@ -91,11 +91,19 @@ def register_routes(api):
             try:
                 data = request.json
                 user = User.query.filter_by(username=data['username']).first()
+                if user and not user.active:
+                    return {'msg': "Your account is deactivated."}, 401
+                
+                
                 if user:
-                    print(user)
+                    
                     token = generate_reset_token(user)
+                    print(user)
                     # send_password_reset_email(user, token)
-                    return {'msg': f'User: {user}. Token {token}'}, 200
+                    return ({
+                        'msg': 'Token generate successful',
+                        'Token': token
+                    }), 200
                 return {'msg': 'User with this email not found.'}, 404
             except Exception as e:
                 return {'msg': f"An error occurred: {str(e)}"}, 500
