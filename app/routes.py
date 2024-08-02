@@ -100,20 +100,12 @@ def update_user(username):
         return jsonify({"msg": f"An error occurred: {str(e)}"}), 500
 
 
-@api_bp.route('/user', methods=['DELETE'])
+@api_bp.route('/user/<string:username>', methods=['DELETE'])
 @jwt_required()
-def delete_user():
+def delete_user(username):
     try:
-        data = request.get_json()
-        if data is None:
-            return jsonify({"msg": "Request body must be JSON."}), 400
-
-        username = data.get('username')
-        
-        if not username:
-            return jsonify({"msg": "Username is required in the request body."}), 400
-
         current_user = get_jwt_identity()
+
         if not current_user:
             return jsonify({"msg": "Invalid token or user not found."}), 401
 
@@ -122,12 +114,13 @@ def delete_user():
         if not user:
             return jsonify({"msg": "User not found."}), 404
 
-
+        # Check if the current user is an admin
         if current_user['role'] != 'ADMIN':
-            return jsonify({"msg": "Permission denied. You are not an admin."}), 403
+            return jsonify({"msg": "Permission denied. Only admin can access."}), 403
 
-        if  current_user['username'] == username or user.role == 'ADMIN':
-            return jsonify({"msg": "Permission denied. You cannot delete an admin."}), 403
+        # Prevent deletion of admin users or the current user
+        if current_user['username'] == username or user.role == UserRole.ADMIN:
+            return jsonify({"msg": "Permission denied. You cannot delete an admin or yourself."}), 403
 
         db.session.delete(user)
         db.session.commit()

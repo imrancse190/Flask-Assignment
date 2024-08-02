@@ -99,16 +99,12 @@ Response Body:
 
 ### Delete user
 
+- An admin can delete only users.
+- An admin can't delete other admin or ownself.
+
 **Request Method: DELETE**
 
-`http://localhost:5000/api/user`
-Request Body:
-
-```json
-{
-  "username": "user3"
-}
-```
+`http://localhost:5000/api/user/user3`
 
 Request Header:
 
