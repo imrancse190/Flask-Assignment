@@ -19,6 +19,8 @@ For add the default user admin.
 
 `http://localhost:5000/api/auth/login`
 
+- Only active user can login.
+
 Request Body:
 
 ```json
@@ -59,6 +61,39 @@ Response Body:
 ```json
 {
   "msg": "User registered successfully."
+}
+```
+
+### Update user
+
+- An admin updates their own information.
+- An admin updates a non-admin user.
+
+**Request Method: PUT**
+
+`http://localhost:5000/api/user/user2`
+Request Body:
+
+```json
+{
+  "first_name": "user2_update",
+  "last_name": "user2_update"
+}
+```
+
+Request Header:
+
+**Authorization:** **Bearer Access-token**
+
+Demo:
+
+`Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcyMjU3NjIxNCwianRpIjoiNjE4MzM5MTItNDIwNS00YTAxLWE1ZTEtZjZlYjIzNjBmYzUwIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6eyJpZCI6MywidXNlcm5hbWUiOiJ1c2VyMiIsInJvbGUiOiJBRE1JTiJ9LCJuYmYiOjE3MjI1NzYyMTQsImNzcmYiOiJlZGI2Yzc1Yi05Njg0LTQ5ZWMtYTNjOS05MTU2MjY1ODFlNjAiLCJleHAiOjE3MjI1NzcxMTR9.WUkPw2O_zZrL7n3KydYNHKxsQ2X6NWvtx8qIgIx8hbY`
+
+Response Body:
+
+```json
+{
+  "msg": "User details updated."
 }
 ```
 
