@@ -4,9 +4,13 @@
 
 This project is a Flask-based API for managing user accounts with JWT authentication, SQLAlchemy for ORM, and Flask-Restx for building RESTful APIs. The application supports user registration, login, password reset, and user management features.
 
+Certainly! Here’s how you can include the requirements section in your `README.md`:
+
+---
+
 ## Installation
 
-Follow these steps to set up the project on your local machine:
+To set up the project, follow these steps:
 
 1. **Create a virtual environment:**
 
@@ -30,21 +34,57 @@ Follow these steps to set up the project on your local machine:
 
 3. **Install the required packages:**
 
+   Make sure you have the following packages installed:
+
+   ```bash
+   pip install Flask==2.2.3
+   pip install SQLAlchemy
+   pip install psycopg2-binary
+   pip install Flask-JWT-Extended==4.3.1
+   pip install Flask-Migrate
+   pip install Flask-Mail
+   pip install flask-restx
+   pip install werkzeug==2.3.0
+   pip install python-dotenv
+   pip install flask-cors
+   pip install itsdangerous
+   ```
+
+   Alternatively, you can use the `requirements.txt` file to install all dependencies at once:
+
    ```bash
    pip install -r requirements.txt
+   ```
+
+   Make sure your `requirements.txt` file contains:
+
+   ```text
+   Flask==2.2.3
+   SQLAlchemy
+   psycopg2-binary
+   Flask-JWT-Extended==4.3.1
+   Flask-Migrate
+   Flask-Mail
+   flask-restx
+   werkzeug==2.3.0
+   python-dotenv
+   flask-cors
+   itsdangerous
    ```
 
 4. **Set up the configuration file:**
 
    - Copy `config.demo.txt` to `.env` and fill in your configuration values. Ensure you set up all necessary environment variables.
 
-5. **Initialize the database:**
+5. **Initialize first user of the database:**
 
-   ```bash
-   python default_data.py
-   ```
+- Make the user admin for access admin features
 
-   This script sets up the default admin user and initializes the database schema.
+  ```bash
+  python default_data.py
+  ```
+
+  This script sets up the default admin user and initializes the database schema.
 
 ## Configuration
 
