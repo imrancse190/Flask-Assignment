@@ -97,6 +97,7 @@ def register_routes(api):
 
         @user_ns.expect(user_model)
         @user_ns.marshal_with(user_model)
+        @user_ns.doc(params={'Authorization': {'in': 'header', 'description': 'Bearer TOKEN'}})
         @jwt_required()
         def put(self, username):
             '''Update user details'''
