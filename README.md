@@ -103,7 +103,12 @@ To set up the project, follow these steps:
    python run.py
    ```
 
-   The application will be available at [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+   The application will be available at [http://127.0.0.1:5000/](http://127.0.0.1:5000/). 
+   
+   You can also access from browser.
+  
+    <img src="ReadmeImage/swagger.png" width="700">
+   
 
 ## Configuration
 
