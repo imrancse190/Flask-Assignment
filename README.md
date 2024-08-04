@@ -4,7 +4,6 @@
 
 This project is a Flask-based API for managing user accounts with JWT authentication, SQLAlchemy for ORM, and Flask-Restx for building RESTful APIs. The application supports user registration, login, password reset, and user management features.
 
-Certainly! Here’s how you can include the requirements section in your `README.md`:
 
 ---
 
@@ -86,6 +85,10 @@ To set up the project, follow these steps:
 
   This script sets up the default admin user and initializes the database schema.
 
+6. Run the application 
+- `python3 run.py`
+- Below link will open the swagger page.
+- http://127.0.0.1:5000/
 ## Configuration
 
 The configuration is loaded from environment variables. Create a `.env` file in the root directory with the following variables:
@@ -120,7 +123,7 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ## API Endpoints
 
 ### User Registration
-
+- Any user can register but initial role="USER".
 **POST** `/api/user/register`
 
 **Request Body:**
@@ -144,6 +147,7 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### User Login
+- Any user can login
 
 **POST** `/api/user/login`
 
@@ -165,7 +169,7 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### Request Password Reset
-
+- Any user can reset his own password.
 **POST** `/api/user/forget_password`
 
 **Request Body:**
@@ -185,6 +189,8 @@ SECURITY_PASSWORD_SALT=your_password_salt
   "token": "reset_token"
 }
 ```
+- Use the **reset_token** into the Reset Password. Without the reset_token the password can't be change.
+- Normally this reset_token will send to the user email then use this reset token the user will reset the password. 
 
 ### Reset Password
 
@@ -192,6 +198,7 @@ SECURITY_PASSWORD_SALT=your_password_salt
 
 **Request Body:**
 
+- Reset token from the for forget_password.
 ```json
 {
   "token": "reset_token",
@@ -208,6 +215,8 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### Get User Details
+- Any user can get his only own information.
+- An Admin can get his also other user means role="USER" information.
 
 **GET** `/api/user/<username>`
 
@@ -232,6 +241,7 @@ Authorization: Bearer your_jwt_access_token
 ```
 
 ### Update User Details
+- A admin can update his ownself and which role="USER" only.
 
 **PUT** `/api/user/<username>`
 
@@ -258,6 +268,9 @@ Authorization: Bearer your_jwt_access_token
 ```
 
 ### Delete User
+
+- The admin can delete only those which role="USER".
+- The admin can't delete his own self also.
 
 **DELETE** `/api/user/<username>`
 
