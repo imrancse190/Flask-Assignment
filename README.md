@@ -3,7 +3,7 @@
 ## Overview
 
 This project is a Flask-based API for managing user accounts with JWT authentication, SQLAlchemy for ORM, and Flask-Restx for building RESTful APIs. The application supports user registration, login, password reset, and user management features.
-
+0
 ## Table of Contents
 
 - [Installation](#installation)
@@ -91,8 +91,10 @@ To set up the project, follow these steps:
 
    - Make the user admin for access admin features
 
-     ```bash
-     python default_data.py
+     ```sql
+      INSERT INTO users (username, first_name, last_name, email, role, active) 
+      VALUES ('admin', 'Admin', 'User', 'admin@example.com', 'ADMIN', TRUE);
+
      ```
 
      This script sets up the default admin user and initializes the database schema.
