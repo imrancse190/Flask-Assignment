@@ -4,8 +4,20 @@
 
 This project is a Flask-based API for managing user accounts with JWT authentication, SQLAlchemy for ORM, and Flask-Restx for building RESTful APIs. The application supports user registration, login, password reset, and user management features.
 
+## Table of Contents
 
----
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Database Migration](#database-migration)
+- [API Endpoints](#api-endpoints)
+  - [User Registration](#user-registration)
+  - [User Login](#user-login)
+  - [Request Password Reset](#request-password-reset)
+  - [Reset Password](#reset-password)
+  - [Get User Details](#get-user-details)
+  - [Update User Details](#update-user-details)
+  - [Delete User](#delete-user)
+- [Contributing](#contributing)
 
 ## Installation
 
@@ -77,18 +89,22 @@ To set up the project, follow these steps:
 
 5. **Initialize first user of the database:**
 
-- Make the user admin for access admin features
+   - Make the user admin for access admin features
 
-  ```bash
-  python default_data.py
-  ```
+     ```bash
+     python default_data.py
+     ```
 
-  This script sets up the default admin user and initializes the database schema.
+     This script sets up the default admin user and initializes the database schema.
 
-6. Run the application 
-- `python3 run.py`
-- Below link will open the swagger page.
-- http://127.0.0.1:5000/
+6. **Run the application:**
+
+   ```bash
+   python run.py
+   ```
+
+   The application will be available at [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
+
 ## Configuration
 
 The configuration is loaded from environment variables. Create a `.env` file in the root directory with the following variables:
@@ -115,15 +131,28 @@ SECURITY_PASSWORD_SALT=your_password_salt
 - **MAIL_PASSWORD**: Password for the email account.
 - **SECURITY_PASSWORD_SALT**: Salt for password hashing.
 
-## Database migration
+## Database Migration
 
-- `flask db migrate -m "message"`
-- `flask db upgrade`
+To manage database migrations, use the following commands:
+
+- Create a new migration:
+
+  ```bash
+  flask db migrate -m "message"
+  ```
+
+- Apply the migration:
+
+  ```bash
+  flask db upgrade
+  ```
 
 ## API Endpoints
 
 ### User Registration
-- Any user can register but initial role="USER".
+
+Any user can register but initial role="USER".
+
 **POST** `/api/user/register`
 
 **Request Body:**
@@ -147,7 +176,8 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### User Login
-- Any user can login
+
+Any user can login.
 
 **POST** `/api/user/login`
 
@@ -169,7 +199,9 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### Request Password Reset
-- Any user can reset his own password.
+
+Any user can reset his own password.
+
 **POST** `/api/user/forget_password`
 
 **Request Body:**
@@ -189,8 +221,9 @@ SECURITY_PASSWORD_SALT=your_password_salt
   "token": "reset_token"
 }
 ```
-- Use the **reset_token** into the Reset Password. Without the reset_token the password can't be change.
-- Normally this reset_token will send to the user email then use this reset token the user will reset the password. 
+
+- Use the **reset_token** into the Reset Password. Without the reset_token the password can't be changed.
+- Normally this reset_token will send to the user email then use this reset token the user will reset the password.
 
 ### Reset Password
 
@@ -198,7 +231,8 @@ SECURITY_PASSWORD_SALT=your_password_salt
 
 **Request Body:**
 
-- Reset token from the for forget_password.
+- Reset token from the forget_password.
+
 ```json
 {
   "token": "reset_token",
@@ -215,8 +249,8 @@ SECURITY_PASSWORD_SALT=your_password_salt
 ```
 
 ### Get User Details
-- Any user can get his only own information.
-- An Admin can get his also other user means role="USER" information.
+
+Any user can get his own information. An Admin can get his and other users' information.
 
 **GET** `/api/user/<username>`
 
@@ -241,7 +275,8 @@ Authorization: Bearer your_jwt_access_token
 ```
 
 ### Update User Details
-- A admin can update his ownself and which role="USER" only.
+
+A admin can update his own and users with role="USER".
 
 **PUT** `/api/user/<username>`
 
@@ -269,8 +304,7 @@ Authorization: Bearer your_jwt_access_token
 
 ### Delete User
 
-- The admin can delete only those which role="USER".
-- The admin can't delete his own self also.
+The admin can delete only those with role="USER". The admin can't delete his own self.
 
 **DELETE** `/api/user/<username>`
 
@@ -291,3 +325,4 @@ Authorization: Bearer your_jwt_access_token
 ## Contributing
 
 Feel free to fork the repository and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
+
