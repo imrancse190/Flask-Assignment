@@ -85,7 +85,7 @@ To set up the project, follow these steps:
 
 4. **Set up the configuration file:**
 
-   - Copy `config.demo.txt` to `.env` and fill in your configuration values. Ensure you set up all necessary environment variables.
+   - Copy `config.demo.txt` to `config.py` and fill in your configuration values. Ensure you set up all necessary environment variables.
 
 5. **Initialize first user of the database:**
 
