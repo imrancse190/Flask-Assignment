@@ -132,7 +132,7 @@ def register_routes(api):
         def get(self, username):
             '''Get user details'''
             current_user = get_jwt_identity()
-            if current_user['role'] != UserRole.ADMIN and current_user['username'] != username:
+            if current_user['role'] != 'ADMIN' and current_user['username'] != username:
                 api.abort(403, "Permission denied.")
             
             user = User.query.filter_by(username=username).first()
@@ -157,8 +157,8 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                if current_user_role == UserRole.ADMIN:
-                    if user.role == UserRole.ADMIN and current_user['username'] != username:
+                if current_user_role == 'ADMIN':
+                    if user.role == 'ADMIN' and current_user['username'] != username:
                         return {'msg': "Permission denied. You cannot update another ADMIN."}, 403
                 else:
                     return {'msg': "Only ADMIN can update information."}, 403
@@ -204,10 +204,10 @@ def register_routes(api):
                 if not user:
                     return {'msg': "User not found."}, 404
 
-                if current_user['role'] != UserRole.ADMIN:
+                if current_user['role'] != 'ADMIN':
                     return {'msg': "Permission denied. Only ADMIN can access."}, 403
 
-                if current_user['username'] == username or user.role == UserRole.ADMIN:
+                if current_user['username'] == username or user.role == 'ADMIN':
                     return {'msg': "Permission denied. You cannot delete an ADMIN and yourself."}, 403
 
                 db.session.delete(user)
