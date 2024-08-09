@@ -97,7 +97,6 @@ To set up the project, follow these steps:
      - You can use Db_Gate or other application for that.
        
 
-     This script sets up the default admin user and initializes the database schema.
 
 6. **Run the application:**
 
