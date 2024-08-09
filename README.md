@@ -91,11 +91,11 @@ To set up the project, follow these steps:
 
    - Make the user admin for access admin features
 
-     ```sql
-      INSERT INTO users (username, first_name, last_name, email, role, active) 
-      VALUES ('admin', 'Admin', 'User', 'admin@example.com', 'ADMIN', TRUE);
-
-     ```
+     - First register a user
+     - Make the user admin for the admin features from the database
+     - role="USER" -> role="ADMIN"
+     - You can use Db_Gate or other application for that.
+       
 
      This script sets up the default admin user and initializes the database schema.
 
